@@ -290,7 +290,7 @@ export function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
+                placeholder="Example@gmail.com"
                 required
               />
             </div>
@@ -321,7 +321,7 @@ export function LoginPage() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="Username"
                 required
               />
             </div>
@@ -331,7 +331,7 @@ export function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
+                placeholder="Example@gmail.com"
                 required
               />
             </div>

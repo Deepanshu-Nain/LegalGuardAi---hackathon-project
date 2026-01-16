@@ -14,11 +14,66 @@ interface Message {
 }
 
 export function ResponsiveAIAssistant() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: 'Hello! Welcome to your AI assistant. How can I help you today?',
+      sender: 'ai',
+      timestamp: new Date(Date.now() - 300000)
+    },
+    {
+      id: '2',
+      text: 'Hi! I need some help with understanding how this chat works.',
+      sender: 'user',
+      timestamp: new Date(Date.now() - 240000)
+    },
+    {
+      id: '3',
+      text: 'Of course! This is a voice-enabled chat interface. You can type messages or use the microphone button for voice input. I can respond to your questions and even read my responses aloud.',
+      sender: 'ai',
+      timestamp: new Date(Date.now() - 180000)
+    },
+    {
+      id: '4',
+      text: 'That sounds great! Can you tell me about the weather?',
+      sender: 'user',
+      timestamp: new Date(Date.now() - 120000)
+    },
+    {
+      id: '5',
+      text: 'I\'d be happy to help with weather information! In a full implementation, I\'d connect to a weather API to give you current conditions. For now, I can tell you that this is a demo showing how voice and chat work together.',
+      sender: 'ai',
+      timestamp: new Date(Date.now() - 60000)
+    },
+    {
+      id: '6',
+      text: 'What other features do you have?',
+      sender: 'user',
+      timestamp: new Date(Date.now() - 30000)
+    },
+    {
+      id: '7',
+      text: 'I have several features! I can help with general questions, provide information on various topics, assist with productivity tasks, and even help with coding questions. I also support voice input and output, making our conversation more natural and accessible.',
+      sender: 'ai',
+      timestamp: new Date(Date.now() - 10000)
+    },
+    {
+      id: '8',
+      text: 'This is amazing! Let me try asking something more complex.',
+      sender: 'user',
+      timestamp: new Date(Date.now() - 5000)
+    },
+    {
+      id: '9',
+      text: 'Absolutely! I\'m designed to handle complex queries and provide detailed responses. Whether you need help with technical problems, creative ideas, or just want to have an interesting conversation, I\'m here to assist. Feel free to ask me anything!',
+      sender: 'ai',
+      timestamp: new Date()
+    }
+  ]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
@@ -178,7 +233,45 @@ export function ResponsiveAIAssistant() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 relative overflow-hidden">
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          /* Custom Scrollbar Styles for Main Content */
+          .main-content {
+            overflow-y: auto !important;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+          }
+          
+          .main-content::-webkit-scrollbar {
+            width: 12px;
+            position: absolute;
+            right: 0;
+          }
+          
+          .main-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+          }
+          
+          .main-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+          }
+          
+          .main-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+          }
+          
+          /* Ensure chat messages don't have their own scroll */
+          .chat-messages {
+            overflow-y: visible !important;
+            max-height: none !important;
+          }
+        `
+      }} />
+      <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-800/20 via-black/20 to-gray-900/20"></div>
       <div className="absolute top-20 left-10 w-32 h-32 bg-gray-700/10 rounded-full blur-xl"></div>
@@ -271,7 +364,7 @@ export function ResponsiveAIAssistant() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col h-full lg:ml-64">
+      <div className="flex flex-col h-full lg:ml-64 main-content">
         {/* Header */}
         <div className="flex items-center justify-between p-4 lg:p-6 relative z-20">
           <div className="flex items-center gap-3">
@@ -353,7 +446,7 @@ export function ResponsiveAIAssistant() {
             /* Chat Interface */
             <div className="h-full flex flex-col">
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto mb-4 space-y-4 pb-4">
+              <div className="flex-1 mb-4 space-y-4 pb-4">
                 {messages.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-gray-400">Start a conversation...</p>
@@ -466,5 +559,6 @@ export function ResponsiveAIAssistant() {
         </div>
       </div>
     </div>
+    </>
   );
 }
