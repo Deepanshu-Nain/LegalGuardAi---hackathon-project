@@ -134,6 +134,15 @@ export function ResponsiveAIAssistant() {
   };
 
   const handleLogout = () => {
+    // Clear chat history by resetting messages to initial state
+    setMessages([
+      {
+        id: '1',
+        text: 'Hello! Welcome to your AI assistant. How can I help you today?',
+        sender: 'ai',
+        timestamp: new Date(Date.now() - 300000)
+      }
+    ]);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
@@ -144,19 +153,72 @@ export function ResponsiveAIAssistant() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // For now, just add a message with the file name
-      const fileMessage: Message = {
+      // Check if it's a PDF, DOCX, or DOC
+      const allowedTypes = [
+        'application/pdf', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword'
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a PDF, DOC, or DOCX file only.');
+        return;
+      }
+
+      // Add user message about uploading
+      const uploadMessage: Message = {
         id: Date.now().toString(),
-        text: `Uploaded file: ${file.name}`,
+        text: `Uploading document: ${file.name}`,
         sender: 'user',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, fileMessage]);
+      setMessages(prev => [...prev, uploadMessage]);
       setShowChat(true);
-      // TODO: Send to backend for LLM analysis
+
+      try {
+        // Create FormData and send to backend
+        const formData = new FormData();
+        formData.append('document', file);
+
+        const response = await fetch('http://localhost:3001/api/process-document', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Add AI response with classification
+          const modelInfo = result.classification.modelUsed ? ` (using ${result.classification.modelUsed})` : '';
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I've analyzed your document "${file.name}". Based on AI analysis${modelInfo}, this document appears to be classified as: **${result.classification.label}** with ${(result.classification.confidence * 100).toFixed(2)}% confidence.`,
+            sender: 'ai',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, aiMessage]);
+        } else {
+          // Add error message
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `Sorry, I couldn't process your document. Error: ${result.message}`,
+            sender: 'ai',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
+      } catch (error) {
+        console.error('Error uploading document:', error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: 'Sorry, there was an error processing your document. Please try again.',
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
     }
   };
 
