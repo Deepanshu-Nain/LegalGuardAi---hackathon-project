@@ -9,11 +9,6 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear any previous login state for testing
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-
     // Initialize background animation
     const legalText = `
       LEGAL DOCUMENTS OFTEN CONTAIN <span class="keyword">AFFIDAVIT</span> <span class="def">confirmed by oath</span> //

@@ -5,18 +5,13 @@ import { useState, useEffect } from 'react';
 
 // Custom hook for authentication state
 function useAuth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
       const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
       setIsLoggedIn(loggedIn);
     };
-
-    // Check on mount
-    checkAuth();
 
     // Listen for storage events
     const handleStorageChange = (e: StorageEvent) => {
@@ -27,7 +22,7 @@ function useAuth() {
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Also check periodically
+    // Check periodically for changes
     const interval = setInterval(checkAuth, 500);
 
     return () => {
@@ -53,7 +48,7 @@ function App() {
           path="/dashboard"
           element={isLoggedIn ? <ResponsiveAIAssistant /> : <Navigate to="/login" replace />}
         />
-        <Route path="/" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

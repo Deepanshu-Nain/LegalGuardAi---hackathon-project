@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
-import { Mic, MicOff, Send, Settings, Menu, X, MessageSquare, Zap, Volume2, User, Image as ImageIcon, LogOut } from 'lucide-react';
+import { Mic, MicOff, Send, Settings, Menu, X, MessageSquare, Zap, Volume2, User, FileText, LogOut } from 'lucide-react';
 import globeImage from 'figma:asset/ef6432358e70cd07cef418bda499a8b4438f8bd9.png';
 
 interface Message {
@@ -23,6 +23,7 @@ export function ResponsiveAIAssistant() {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,7 +81,28 @@ export function ResponsiveAIAssistant() {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
     navigate('/login');
+  };
+
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For now, just add a message with the file name
+      const fileMessage: Message = {
+        id: Date.now().toString(),
+        text: `Uploaded file: ${file.name}`,
+        sender: 'user',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, fileMessage]);
+      setShowChat(true);
+      // TODO: Send to backend for LLM analysis
+    }
   };
 
   const handleSendMessage = () => {
@@ -381,9 +403,10 @@ export function ResponsiveAIAssistant() {
                 variant="ghost"
                 size="icon"
                 className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
-                title="Upload Image"
+                title="Upload File"
+                onClick={handleFileUpload}
               >
-                <ImageIcon className="h-5 w-5" />
+                <FileText className="h-5 w-5" />
               </Button>
               
               <div className="flex-1 relative">
@@ -412,6 +435,13 @@ export function ResponsiveAIAssistant() {
               >
                 <Send className="h-4 w-4" />
               </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx"
+                style={{ display: 'none' }}
+              />
             </div>
             
             {isListening && (
