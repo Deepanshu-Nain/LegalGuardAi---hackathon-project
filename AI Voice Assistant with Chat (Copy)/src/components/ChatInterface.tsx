@@ -12,14 +12,7 @@ interface Message {
 }
 
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hello! I'm your AI assistant. You can type or use voice to talk with me. How can I help you today?",
-      sender: 'ai',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -64,25 +57,11 @@ export function ChatInterface() {
   }, [messages]);
 
   const generateAIResponse = (userMessage: string): string => {
-    // Mock AI responses based on keywords
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-      return "Hello! It's great to chat with you. What would you like to talk about?";
-    } else if (lowerMessage.includes('weather')) {
-      return "I'd love to help with weather information! In a full implementation, I'd connect to a weather API to give you current conditions.";
-    } else if (lowerMessage.includes('time')) {
-      return `The current time is ${new Date().toLocaleTimeString()}.`;
-    } else if (lowerMessage.includes('help')) {
-      return "I'm here to help! You can ask me questions, have a conversation, or try using the voice feature by clicking the microphone button.";
-    } else if (lowerMessage.includes('voice') || lowerMessage.includes('speak')) {
-      return "Yes, I can speak! Click the speaker button next to my messages to hear them read aloud.";
-    } else {
-      return "That's interesting! I'm a mock AI assistant, so my responses are limited, but I'm here to demonstrate the chat and voice features.";
-    }
+    // Return empty string since we're focusing on analysis functionality
+    return "";
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMessage: Message = {
@@ -94,18 +73,49 @@ export function ChatInterface() {
 
     setMessages(prev => [...prev, userMessage]);
 
-    // Generate AI response
-    setTimeout(() => {
+    // Clear input
+    setInputText('');
+
+    try {
+      // Call the Hugging Face Space for analysis
+      const response = await fetch('http://localhost:3001/api/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: inputText })
+      });
+
+      const result = await response.json();
+
+      let analysisText = '';
+      if (result.prediction && result.prediction.length > 0) {
+        const prediction = result.prediction[0];
+        analysisText = `Analysis: This input appears to be classified as **${prediction.label}** with ${(prediction.score * 100).toFixed(2)}% confidence.`;
+      } else {
+        analysisText = 'Analysis: Unable to classify this input.';
+      }
+
+      // Generate AI response
+      const aiResponseText = generateAIResponse(inputText);
       const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: generateAIResponse(inputText),
+        id: `ai-${Date.now()}`,
+        text: aiResponseText ? `${aiResponseText}\n\n${analysisText}` : analysisText,
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-
-    setInputText('');
+    } catch (error) {
+      console.error('Error calling analysis API:', error);
+      // Fallback response
+      const aiResponse: Message = {
+        id: `ai-${Date.now()}`,
+        text: "I apologize, but I'm unable to analyze your message at the moment. Please try again later.",
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    }
   };
 
   const handleVoiceInput = () => {

@@ -251,62 +251,80 @@ app.post('/api/process-document', upload.single('document'), async (req, res) =>
 // Hugging Face Space proxy endpoint
 app.post('/api/predict', async (req, res) => {
   try {
-    const HF_SPACE_URL = "https://cyphernothere-jaskdhsjd.hf.space/predict";
-    
-    // Forward the request body to the Space
-    const response = await fetch(HF_SPACE_URL, {
+    const HF_SPACE_URL = "https://coolghost099-final.hf.space/gradio_api/call/analyze_clause";
+    const HF_TOKEN = "REMOVED";
+
+    // Format for Gradio Space: { data: ["input text"] }
+    const spacePayload = {
+      data: [req.body.text || ""]
+    };
+
+    // Make initial request to get event_id
+    const initialResponse = await fetch(HF_SPACE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HF_TOKEN}`  // Include token if the Space is private
+        'Authorization': `Bearer ${HF_TOKEN}`
       },
-      body: JSON.stringify(req.body),
-      signal: AbortSignal.timeout(120000)  // 2 minute timeout
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    res.status(response.status).json(result);
-  } catch (err) {
-    console.error('Error forwarding to Hugging Face Space:', err?.message);
-    const status = err?.response?.status || 500;
-    const data = err?.response?.data || { error: err.message };
-    res.status(status).json(data);
-  }
-});
-
-// Test endpoint with specific legal text
-app.post('/api/analyze-legal-text', async (req, res) => {
-  try {
-    const url = "https://cyphernothere-jaskdhsjd.hf.space/predict";
-
-    const payload = {
-      text: "Licensee and its sublicensees shall use the Technology in the precise manner indicated in this Agreement and in any specifications that may be provided to Licensee by Licensor from time to time. Licensee and its sublicensees shall not make any material changes in the use or application of the Technology as set forth in such specifications without the prior written consent of Licensor, which consent shall not be unreasonably withheld so long as Licensor has been provided with all reasonably necessary information as to the basis for the requested change and has received reimbursement for the reasonable direct cost to Licensor of evaluating such requested change and submitted information."
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${HF_TOKEN}`
-      },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(spacePayload),
       signal: AbortSignal.timeout(120000)
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (!initialResponse.ok) {
+      throw new Error(`HTTP ${initialResponse.status}: ${initialResponse.statusText}`);
     }
 
-    const data = await response.json();
-    res.json({ success: true, analysis: data });
-  } catch (error) {
-    console.error('Error analyzing legal text:', error);
-    res.status(500).json({ success: false, message: 'Error analyzing legal text', error: error.message });
+    const initialResult = await initialResponse.json();
+    const eventId = initialResult.event_id;
+
+    if (!eventId) {
+      throw new Error('No event_id received from Gradio Space');
+    }
+
+    // Wait a moment for processing, then get the result
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+
+    const pollUrl = `${HF_SPACE_URL}/${eventId}`;
+    const pollResponse = await fetch(pollUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${HF_TOKEN}`
+      },
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (pollResponse.ok) {
+      const pollText = await pollResponse.text();
+
+      // Parse SSE format response
+      if (pollText.includes('data: ')) {
+        // Extract the data line
+        const dataLine = pollText.split('\n').find(line => line.startsWith('data: '));
+        if (dataLine) {
+          const dataStr = dataLine.replace('data: ', '');
+          const gradioData = JSON.parse(dataStr);
+
+          // Convert Gradio format to our expected format
+          // Gradio returns array of objects with label and confidences
+          const predictions = gradioData.map(item => ({
+            label: item.label,
+            score: item.confidences[0]?.confidence || 0
+          }));
+
+          res.json({ prediction: predictions });
+          return;
+        }
+      }
+    }
+
+    throw new Error('Timeout waiting for Gradio Space response');
+
+  } catch (err) {
+    console.error('Error forwarding to Hugging Face Space:', err?.message);
+    res.status(500).json({
+      prediction: [{ label: "Error", score: 0 }],
+      error: err.message
+    });
   }
 });
 

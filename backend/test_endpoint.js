@@ -1,18 +1,22 @@
-async function testEndpoint() {
+async function testCorrectEndpoint() {
   try {
-    const response = await fetch('http://localhost:3001/api/analyze-legal-text', {
+    console.log('Testing the correct Gradio endpoint...');
+    const response = await fetch('https://coolghost099-final.hf.space/gradio_api/call/analyze_clause', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({})
+      body: JSON.stringify({
+        data: ["Licensee and its sublicensees shall use the Technology in the precise manner indicated in this Agreement."]
+      })
     });
 
-    const data = await response.json();
-    console.log('Response:', data);
+    console.log('Status:', response.status);
+    const text = await response.text();
+    console.log('Response:', text);
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
-testEndpoint();
+testCorrectEndpoint();

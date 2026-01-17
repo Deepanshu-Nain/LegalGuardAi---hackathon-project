@@ -14,62 +14,7 @@ interface Message {
 }
 
 export function ResponsiveAIAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! Welcome to your AI assistant. How can I help you today?',
-      sender: 'ai',
-      timestamp: new Date(Date.now() - 300000)
-    },
-    {
-      id: '2',
-      text: 'Hi! I need some help with understanding how this chat works.',
-      sender: 'user',
-      timestamp: new Date(Date.now() - 240000)
-    },
-    {
-      id: '3',
-      text: 'Of course! This is a voice-enabled chat interface. You can type messages or use the microphone button for voice input. I can respond to your questions and even read my responses aloud.',
-      sender: 'ai',
-      timestamp: new Date(Date.now() - 180000)
-    },
-    {
-      id: '4',
-      text: 'That sounds great! Can you tell me about the weather?',
-      sender: 'user',
-      timestamp: new Date(Date.now() - 120000)
-    },
-    {
-      id: '5',
-      text: 'I\'d be happy to help with weather information! In a full implementation, I\'d connect to a weather API to give you current conditions. For now, I can tell you that this is a demo showing how voice and chat work together.',
-      sender: 'ai',
-      timestamp: new Date(Date.now() - 60000)
-    },
-    {
-      id: '6',
-      text: 'What other features do you have?',
-      sender: 'user',
-      timestamp: new Date(Date.now() - 30000)
-    },
-    {
-      id: '7',
-      text: 'I have several features! I can help with general questions, provide information on various topics, assist with productivity tasks, and even help with coding questions. I also support voice input and output, making our conversation more natural and accessible.',
-      sender: 'ai',
-      timestamp: new Date(Date.now() - 10000)
-    },
-    {
-      id: '8',
-      text: 'This is amazing! Let me try asking something more complex.',
-      sender: 'user',
-      timestamp: new Date(Date.now() - 5000)
-    },
-    {
-      id: '9',
-      text: 'Absolutely! I\'m designed to handle complex queries and provide detailed responses. Whether you need help with technical problems, creative ideas, or just want to have an interesting conversation, I\'m here to assist. Feel free to ask me anything!',
-      sender: 'ai',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -118,31 +63,13 @@ export function ResponsiveAIAssistant() {
   }, [messages]);
 
   const generateAIResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-      return "Hello! I'm your AI assistant. I'm here to help you with anything you need. How can I assist you today?";
-    } else if (lowerMessage.includes('weather')) {
-      return "I'd love to help with weather information! In a full implementation, I'd connect to a weather API to give you current conditions for your location.";
-    } else if (lowerMessage.includes('time')) {
-      return `The current time is ${new Date().toLocaleTimeString()}.`;
-    } else if (lowerMessage.includes('help')) {
-      return "I'm here to help! You can ask me questions, have a conversation, or use voice input by tapping the microphone button.";
-    } else {
-      return "That's an interesting question! I'm a demo AI assistant with simulated responses, but I'm designed to show how voice and chat interactions work together.";
-    }
+    // Return empty string since we're relying on the analysis from the backend
+    return "";
   };
 
   const handleLogout = () => {
-    // Clear chat history by resetting messages to initial state
-    setMessages([
-      {
-        id: '1',
-        text: 'Hello! Welcome to your AI assistant. How can I help you today?',
-        sender: 'ai',
-        timestamp: new Date(Date.now() - 300000)
-      }
-    ]);
+    // Clear chat history by resetting messages to empty state
+    setMessages([]);
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
@@ -252,6 +179,7 @@ export function ResponsiveAIAssistant() {
       });
 
       const result = await response.json();
+      console.log('API result:', result);
 
       let analysisText = '';
       if (result.prediction && result.prediction.length > 0) {
@@ -261,20 +189,23 @@ export function ResponsiveAIAssistant() {
         analysisText = 'Analysis: Unable to classify this input.';
       }
 
+      console.log('Analysis text:', analysisText);
+
       // Generate AI response
+      const aiResponseText = generateAIResponse(inputText);
       const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `${generateAIResponse(inputText)}\n\n${analysisText}`,
+        id: `ai-${Date.now()}`,
+        text: aiResponseText ? `${aiResponseText}\n\n${analysisText}` : analysisText,
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Error calling analysis API:', error);
-      // Fallback to just the AI response without analysis
+      // Fallback response with analysis attempt
       const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: generateAIResponse(inputText),
+        id: `ai-${Date.now()}`,
+        text: "I apologize, but I'm unable to analyze your message at the moment. Please try again later.",
         sender: 'ai',
         timestamp: new Date()
       };
@@ -425,26 +356,22 @@ export function ResponsiveAIAssistant() {
       <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-black/40 backdrop-blur-lg border-r border-white/10 z-30">
         <div className="p-6">
           <div className="mb-8">
-            <h2 className="text-white text-xl mb-2">AI Assistant</h2>
-            <p className="text-gray-400 text-sm">Your intelligent companion</p>
+            <h2 className="text-white text-xl mb-2">Legal Analyzer</h2>
+            <p className="text-gray-400 text-sm">Document Analysis Tool</p>
           </div>
           
           <div className="space-y-3">
             <Button variant="ghost" className="w-full justify-start text-white hover:bg-white/5">
               <MessageSquare className="w-4 h-4 mr-3" />
-              Chat History
+              Chat
             </Button>
             <Button variant="ghost" className="w-full justify-start text-white hover:bg-white/5">
-              <Zap className="w-4 h-4 mr-3" />
-              Quick Actions
+              <FileText className="w-4 h-4 mr-3" />
+              Documents
             </Button>
             <Button variant="ghost" className="w-full justify-start text-white hover:bg-white/5">
               <Settings className="w-4 h-4 mr-3" />
               Settings
-            </Button>
-            <Button variant="ghost" className="w-full justify-start text-white hover:bg-white/5">
-              <User className="w-4 h-4 mr-3" />
-              Profile
             </Button>
             <Button 
               variant="ghost" 
@@ -512,10 +439,10 @@ export function ResponsiveAIAssistant() {
 
               {/* Welcome Text */}
               <div className="space-y-2 lg:space-y-4">
-                <h2 className="text-2xl lg:text-4xl text-white">Hello there!</h2>
-                <p className="text-lg lg:text-xl text-gray-300">I'm your AI assistant</p>
+                <h2 className="text-2xl lg:text-4xl text-white">Legal Document Analyzer</h2>
+                <p className="text-lg lg:text-xl text-gray-300">AI-Powered Analysis</p>
                 <p className="text-base lg:text-lg text-gray-400 max-w-md">
-                  Ready to help you with questions, tasks, and conversations
+                  Upload documents or enter text for intelligent legal clause analysis
                 </p>
               </div>
 
@@ -602,7 +529,7 @@ export function ResponsiveAIAssistant() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
+                  placeholder="Input"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 pr-12 rounded-full focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                 />
                 <Button
