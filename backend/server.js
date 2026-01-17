@@ -40,7 +40,7 @@ class HuggingFaceInferenceClient {
 }
 
 // Hugging Face setup - equivalent to Python code
-const HF_TOKEN = 'REMOVED';
+const HF_TOKEN = process.env.HF_TOKEN;
 const repo_id = "ShivendraNT/ClauseGuard-BERT-Specialist";
 
 const llm_client = new HuggingFaceInferenceClient(
