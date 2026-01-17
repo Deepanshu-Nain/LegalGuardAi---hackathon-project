@@ -222,7 +222,7 @@ export function ResponsiveAIAssistant() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMessage: Message = {
@@ -235,8 +235,43 @@ export function ResponsiveAIAssistant() {
     setMessages(prev => [...prev, userMessage]);
     setShowChat(true);
 
-    // Generate AI response
-    setTimeout(() => {
+    // Clear input
+    setInputText('');
+
+    // Clear input
+    setInputText('');
+
+    try {
+      // Call the Hugging Face Space for analysis
+      const response = await fetch('http://localhost:3001/api/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: inputText })
+      });
+
+      const result = await response.json();
+
+      let analysisText = '';
+      if (result.prediction && result.prediction.length > 0) {
+        const prediction = result.prediction[0];
+        analysisText = `Analysis: This input appears to be classified as **${prediction.label}** with ${(prediction.score * 100).toFixed(2)}% confidence.`;
+      } else {
+        analysisText = 'Analysis: Unable to classify this input.';
+      }
+
+      // Generate AI response
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `${generateAIResponse(inputText)}\n\n${analysisText}`,
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    } catch (error) {
+      console.error('Error calling analysis API:', error);
+      // Fallback to just the AI response without analysis
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         text: generateAIResponse(inputText),
@@ -244,9 +279,7 @@ export function ResponsiveAIAssistant() {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-
-    setInputText('');
+    }
   };
 
   const handleVoiceInput = () => {
