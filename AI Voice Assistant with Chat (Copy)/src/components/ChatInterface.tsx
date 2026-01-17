@@ -76,24 +76,43 @@ export function ChatInterface() {
     // Clear input
     setInputText('');
 
+    const isLegal = /clause|license|agreement|contract|terms|intellectual property|ip rights|copyright|patent|trademark/i.test(inputText);
+
     try {
-      // Call the Hugging Face Space for analysis
-      const response = await fetch('http://localhost:3001/api/predict', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text: inputText })
-      });
-
-      const result = await response.json();
-
       let analysisText = '';
-      if (result.prediction && result.prediction.length > 0) {
-        const prediction = result.prediction[0];
-        analysisText = `Analysis: This input appears to be classified as **${prediction.label}** with ${(prediction.score * 100).toFixed(2)}% confidence.`;
+      if (isLegal) {
+        const response = await fetch('http://localhost:3004/api/legal-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clause: inputText })
+        });
+        const result = await response.json();
+        if (result.success) {
+          try {
+            const data = JSON.parse(result.result);
+            analysisText = `Legal Analysis:\nRevised Clause: ${data.revised_clause}\nSummary of Changes: ${data.summary_of_changes}`;
+          } catch (e) {
+            analysisText = `Legal Analysis: ${result.result}`;
+          }
+        } else {
+          analysisText = 'Legal analysis failed.';
+        }
       } else {
-        analysisText = 'Analysis: Unable to classify this input.';
+        // Call the Hugging Face Space for analysis
+        const response = await fetch('http://localhost:3004/api/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: inputText })
+        });
+        const result = await response.json();
+        if (result.prediction && result.prediction.length > 0) {
+          const prediction = result.prediction[0];
+          analysisText = `Analysis: This input appears to be classified as **${prediction.label}** with ${(prediction.score * 100).toFixed(2)}% confidence.`;
+        } else {
+          analysisText = 'Analysis: Unable to classify this input.';
+        }
       }
 
       // Generate AI response

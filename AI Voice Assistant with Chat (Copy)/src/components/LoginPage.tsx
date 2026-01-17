@@ -41,7 +41,7 @@ export function LoginPage() {
         ? { email, password }
         : { name, email, password };
 
-      const response = await fetch(`http://localhost:3001${endpoint}`, {
+      const response = await fetch(`http://localhost:3004${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

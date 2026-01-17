@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@gradio/client": "^2.0.2",
     "@huggingface/inference": "^4.13.9",
     "cors": "^2.8.5",
     "express": "^5.2.1",

@@ -80,7 +80,7 @@ export function HolographicAssistant() {
 
     try {
       // Call the Hugging Face Space for analysis
-      const response = await fetch('http://localhost:3001/api/predict', {
+      const response = await fetch('http://localhost:3004/api/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
